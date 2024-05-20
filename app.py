@@ -74,7 +74,7 @@ def detect_objects():
         history_collection.insert_one({
             "image_url": cloudinary_response['secure_url'],
             "object_counts": object_counts,
-            "timestamp": datetime.utcnow()
+            "timestamp": datetime()
         })
         
         return jsonify({
