@@ -4,7 +4,7 @@ services:
   web:
     build: .
     ports:
-      - "8000:8000"
+      - "5000:5000" 
     depends_on:
       - mongodb
 
@@ -12,6 +12,15 @@ services:
     image: mongo:latest
     volumes:
       - mongo_data:/data/db
+
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    ports:
+      - "8080:80"
+    depends_on:
+      - web
 
 volumes:
   mongo_data:

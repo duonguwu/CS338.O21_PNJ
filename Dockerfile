@@ -19,7 +19,7 @@ RUN apt-get update && \
 # Copy the rest of the application code
 COPY . .
 
-# Expose port 8000 for Gunicorn
-EXPOSE 8000
+# Expose port 5000 for Gunicorn
+EXPOSE 5000
 
-CMD ["gunicorn", "-b", "0.0.0.0:8000", "app:app"]
+CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:app"]
