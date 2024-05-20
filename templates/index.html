@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jewelry Recognition</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="/">Product</a></li>
+            <li><a href="/history">History</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <h1>Jewelry Recognition</h1>
+        <div class="upload-section">
+            <input type="file" id="imageInput">
+            <button onclick="uploadImage()">Upload</button>
+        </div>
+        <div class="result-section">
+            <div class="image-container" id="imageContainer">
+                <!-- Ảnh sẽ được hiển thị ở đây -->
+            </div>
+            <div class="table-container">
+                <table id="resultTable">
+                    <tr>
+                        <th>Class</th>
+                        <th>Count</th>
+                    </tr>
+                    <tr>
+                        <td>Vòng tay</td>
+                        <td>4</td>
+                    </tr>
+                    <tr>
+                        <td>Vòng cổ</td>
+                        <td>1</td>
+                    </tr>
+                    <tr>
+                        <td>Bông tai</td>
+                        <td>1</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function uploadImage() {
+            const input = document.getElementById('imageInput');
+            const file = input.files[0];
+            const formData = new FormData();
+            formData.append('image', file);
+
+            fetch('/detect', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const imageContainer = document.getElementById('imageContainer');
+                imageContainer.innerHTML = `<img src="${data.image_url}" alt="Result Image">`;
+
+                const resultTable = document.getElementById('resultTable');
+                resultTable.innerHTML = `
+                    <tr>
+                        <th>Class</th>
+                        <th>Count</th>
+                    </tr>
+                    ${data.object_counts.map(item => `<tr><td>${item.class}</td><td>${item.count}</td></tr>`).join('')}
+                `;
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>

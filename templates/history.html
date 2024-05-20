@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>History</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="/">Product</a></li>
+            <li><a href="/history">History</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <h1>Upload History</h1>
+        <div class="filter-section">
+            <form method="get" action="/history">
+                <label for="start_date">Start Date:</label>
+                <input type="date" id="start_date" name="start_date">
+                <label for="end_date">End Date:</label>
+                <input type="date" id="end_date" name="end_date">
+                <button type="submit">Filter</button>
+            </form>
+        </div>
+        <div class="history-section">
+            {% for item in history_items %}
+            <div class="history-item">
+                <img src="{{ item.image_url }}" alt="History Image">
+                <p>Thời gian kiểm kê: {{ item.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                <table>
+                    <tr>
+                        <th>Class</th>
+                        <th>Count</th>
+                    </tr>
+                    {% for count in item.object_counts %}
+                    <tr>
+                        <td>{{ count.class }}</td>
+                        <td>{{ count.count }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="pagination">
+            {% if page > 1 %}
+            <a href="/history?page={{ page - 1 }}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}">Previous</a>
+            {% endif %}
+            {% for p in range(1, total_pages + 1) %}
+            <a href="/history?page={{ p }}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" class="{{ 'active' if p == page else '' }}">{{ p }}</a>
+            {% endfor %}
+            {% if page < total_pages %}
+            <a href="/history?page={{ page + 1 }}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}">Next</a>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
