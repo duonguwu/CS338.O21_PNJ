@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jewelry Recognition</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="../static/css/styles.css">
 </head>
+
 <body>
     <nav>
         <ul>
@@ -17,12 +19,19 @@
     <div class="container">
         <h1>Jewelry Recognition</h1>
         <div class="upload-section">
-            <input type="file" id="imageInput">
-            <button onclick="uploadImage()">Upload</button>
+            <input type="file" id="imageInput" accept="image/*" />
+            <button onclick="handleImageUpload()">Upload</button>
+            <button id="buttonDownload" onclick="downloadImage()" style="display: none;">View</button>
         </div>
         <div class="result-section">
-            <div class="image-container" id="imageContainer">
-                <!-- Ảnh sẽ được hiển thị ở đây -->
+            <div class="image-container" id="imageContainer" ondragover="allowDrop(event)" ondrop="drop(event)">
+                <p id="dragDropText">Chưa chọn ảnh</p>
+                <div id="loadingSpinner" style="display: none;">
+                    <p>Đang xử lý, vui lòng chờ...</p>
+                    <div class="spinner-container">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
             </div>
             <div class="table-container">
                 <table id="resultTable">
@@ -31,16 +40,16 @@
                         <th>Count</th>
                     </tr>
                     <tr>
-                        <td>Vòng tay</td>
-                        <td>4</td>
-                    </tr>
-                    <tr>
                         <td>Vòng cổ</td>
-                        <td>1</td>
+                        <td>0</td>
                     </tr>
                     <tr>
                         <td>Bông tai</td>
-                        <td>1</td>
+                        <td>0</td>
+                    </tr>
+                    <tr>
+                        <td>Nhẫn</td>
+                        <td>0</td>
                     </tr>
                 </table>
             </div>
@@ -48,32 +57,117 @@
     </div>
 
     <script>
-        function uploadImage() {
-            const input = document.getElementById('imageInput');
-            const file = input.files[0];
+        const imageContainer = document.getElementById('imageContainer');
+        const dragDropText = document.getElementById('dragDropText');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const imageInput = document.getElementById('imageInput');
+        const buttonDownload = document.getElementById('buttonDownload');
+
+        let currentFile = "";
+
+        function downloadImage(){
+
+            const image = imageContainer.querySelector('img');
+            if (!image) {
+                alert("Please upload an image first.");
+                return;
+            }
+            const link = image.src;
+            window.open(link);
+        }
+
+        function allowDrop(event) {
+            event.preventDefault();
+        }
+
+        function drop(event) {
+            event.preventDefault();
+            const file = event.dataTransfer.files[0];
+            renderImage(file);
+            currentFile = file;
+            imageInput.files = event.dataTransfer.files;
+        }
+
+        imageInput.addEventListener('change', function (event) {
+            const file = event.target.files[0];
+            renderImage(file);
+            currentFile = file;
+        });
+
+        function renderImage(file) {
+            const reader = new FileReader();
+
+            reader.onload = function (event) {
+                const imageUrl = event.target.result;
+
+                // Tạo element img mới
+                const imgElement = document.createElement('img');
+                imgElement.src = imageUrl;
+                imgElement.alt = 'Rendered Image';
+
+                // Xóa bỏ ảnh cũ nếu có
+                const currentImage = imageContainer.querySelector('img');
+                if (currentImage) {
+                    imageContainer.removeChild(currentImage);
+                }
+                // Thêm ảnh mới vào div
+                imageContainer.appendChild(imgElement);
+
+                // Hiển thị ảnh
+                imgElement.onload = function () {
+                    imgElement.style.display = 'block';
+                };
+                dragDropText.style.display = 'none';
+            };
+
+            // Đọc và render ảnh
+            reader.readAsDataURL(file);
+        }
+
+        function handleImageUpload() {
+            const file = currentFile;
+            console.log(file);
+            if (!file) {
+                alert("Please select an image.");
+                return;
+            }
+
             const formData = new FormData();
             formData.append('image', file);
+
+            const currentImage = imageContainer.querySelector('img');
+            if (currentImage) {
+                imageContainer.removeChild(currentImage);
+            }
+
+            loadingSpinner.style.display = 'block';
 
             fetch('/detect', {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
-            .then(data => {
-                const imageContainer = document.getElementById('imageContainer');
-                imageContainer.innerHTML = `<img src="${data.image_url}" alt="Result Image">`;
+                .then(response => response.json())
+                .then(data => {
 
-                const resultTable = document.getElementById('resultTable');
-                resultTable.innerHTML = `
+                    const image = document.createElement('img');
+                    image.src = data.image_url;
+                    image.alt = 'Result Image';
+                    imageContainer.appendChild(image);
+
+                    const resultTable = document.getElementById('resultTable');
+                    resultTable.innerHTML = `
                     <tr>
                         <th>Class</th>
                         <th>Count</th>
                     </tr>
                     ${data.object_counts.map(item => `<tr><td>${item.class}</td><td>${item.count}</td></tr>`).join('')}
                 `;
-            })
-            .catch(error => console.error('Error:', error));
+                    loadingSpinner.style.display = 'none';
+                    buttonDownload.style.display = 'inline-block';
+                })
+                .catch(error => console.error('Error:', error));
         }
     </script>
 </body>
+
 </html>

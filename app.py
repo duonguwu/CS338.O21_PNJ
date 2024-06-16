@@ -7,7 +7,7 @@ import cloudinary.uploader
 from collections import Counter
 from pymongo import MongoClient
 import math
-from datetime import datetime
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 app.json.ensure_ascii = False
@@ -32,21 +32,50 @@ def index():
 @app.route('/history')
 def history():
     page = int(request.args.get('page', 1))
-    per_page = 5
+    per_page = 6
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
+    print("Start date:", start_date)
+    print("End date:", end_date)
     
     query = {}
+    sort_order = [('timestamp', -1)]  
     if start_date and end_date:
-        start_date = datetime.strptime(start_date, '%Y-%m-%d')
-        end_date = datetime.strptime(end_date, '%Y-%m-%d')
-        query = {"timestamp": {"$gte": start_date, "$lt": end_date}}
+        start = start_date
+        end = end_date
+        query = {"timestamp": {"$gte": datetime.strptime(start_date, '%Y-%m-%d'), "$lt": datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1) }}
+    else:
+        start = None
+        end = None
+
+    print("Start:", start)  
+    print("End:", end)
 
     total_items = history_collection.count_documents(query)
     total_pages = math.ceil(total_items / per_page)
+    
+    list_items = history_collection.find(query)
+    
+    total_items = list(list_items)
 
-    history_items = history_collection.find(query).skip((page - 1) * per_page).limit(per_page)
-    return render_template('history.html', history_items=history_items, page=page, total_pages=total_pages)
+    class_counts = {}
+    for item in total_items:
+        for obj in item['object_counts']:
+            class_name = obj['class']
+            count = obj['count']
+            if class_name in class_counts:
+                class_counts[class_name] += count
+            else:
+                class_counts[class_name] = count
+
+    paged_items_cursor = history_collection.find(query).sort(sort_order).skip((page - 1) * per_page).limit(per_page)
+    items = list(paged_items_cursor)
+
+
+    if start and end:
+        return render_template('history.html', history_items=items, page=page, total_pages=total_pages, start_date=start_date, end_date=end_date, class_counts=class_counts)
+    else:
+        return render_template('history.html', history_items=items, page=page, total_pages=total_pages, class_counts=class_counts)
 
 
 @app.route('/detect', methods=['POST'])
@@ -70,13 +99,12 @@ def detect_objects():
         temp_image_path = "temp_image.jpg"
         cv2.imwrite(temp_image_path, im_array)
         cloudinary_response = cloudinary.uploader.upload(temp_image_path)
-        
         history_collection.insert_one({
             "image_url": cloudinary_response['secure_url'],
             "object_counts": object_counts,
-            "timestamp": datetime()
+            "timestamp": datetime.now()
         })
-        
+        print(cloudinary_response['secure_url'])
         return jsonify({
             "object_counts": object_counts,
             "image_url": cloudinary_response['secure_url']

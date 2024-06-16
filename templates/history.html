@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>History</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="../static/css/styles.css">
 </head>
 <body>
     <nav>
@@ -16,16 +16,35 @@
 
     <div class="container">
         <h1>Upload History</h1>
-        <div class="filter-section">
+        <div class="filter-section">        
             <form method="get" action="/history">
                 <label for="start_date">Start Date:</label>
-                <input type="date" id="start_date" name="start_date">
+                <input type="date" id="start_date" name="start_date" value="{{ start_date }}">
                 <label for="end_date">End Date:</label>
-                <input type="date" id="end_date" name="end_date">
+                <input type="date" id="end_date" name="end_date" value="{{ end_date }}">
                 <button type="submit">Filter</button>
             </form>
         </div>
+        <h2>
+            Tổng số lượng sản phẩm theo loại
+        </h2>
+        <div class="class-counts">
+            <table>
+                <tr>
+                    <th>Class</th>
+                    <th>Count</th>
+                </tr>
+                {% for class_name, count in class_counts.items() %}
+                <tr>
+                    <td>{{ class_name }}</td>
+                    <td>{{ count }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            </div>
+
         <div class="history-section">
+
             {% for item in history_items %}
             <div class="history-item">
                 <img src="{{ item.image_url }}" alt="History Image">
@@ -42,6 +61,9 @@
                     </tr>
                     {% endfor %}
                 </table>
+                <div class="button-group">
+                    <button onclick="window.open('{{ item.image_url }}')">View</button>
+                </div>
             </div>
             {% endfor %}
         </div>
@@ -57,5 +79,8 @@
             {% endif %}
         </div>
     </div>
+    <script>
+
+    </script>
 </body>
 </html>
