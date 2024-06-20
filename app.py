@@ -20,8 +20,9 @@ cloudinary.config(
 )
 
 uri = 'mongodb+srv://duonga1ne1:duong2003@cluster0.zjdjlqs.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
+url = 'mongodb+srv://duonga1ne1:duong2003@cluster0.zjdjlqs.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
 
-client = MongoClient(uri)
+client = MongoClient(url)
 db = client.jewelry_recognition
 history_collection = db.history
 
